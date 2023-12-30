@@ -1,0 +1,214 @@
+---
+title: "Untitled"
+author: "Jayati Sharma"
+date: "2022-09-22"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(readtext) #handling text files
+library(dplyr) #data manipulation
+library(tidyverse) #data manipulation
+library(readxl) #importing excel files
+library(ggplot2) #data visualizations
+library(ggthemes) #for visualization themes
+library(RColorBrewer) #for colors
+library(viridis) #for colors
+library(stringr) #string manipulation
+library(classInt) #choosing univariate class intervals
+library(quanteda) #for textual analysis
+library(quanteda.textplots) #plotting functions for visualizing textual data
+library(quanteda.textstats) #for textual statistics
+library(tokenizers) #convert natural language text into tokens
+library(furrr) #mapping functions
+
+#directory
+data_dir <- "C:/Users/HP/Downloads/TXT"
+```
+
+
+```{r importing all files, include = FALSE}
+#Reading in text files
+ungd_files <- readtext(paste0(data_dir, "//*"),
+                                 docvarsfrom = "filenames", 
+                                 dvsep= "_", 
+                                 docvarnames = c("Country", "Session", "Year"))
+
+#changing row.names to have only country_year, rather than folder pathway from `readtext`.
+ ungd_files$doc_id <- str_replace(ungd_files$doc_id , ".txt", "") %>%
+   str_replace(. , "_\\d{2}", "")
+``` 
+
+
+```{r Subsetting files except India, include=FALSE}
+#Subsetting all speeches except India
+ungd_files_except_india <- ungd_files %>% filter(Country != "IND")
+
+#Creating corpus of speeches
+ungd_corpus <- corpus(ungd_files_except_india, text_field = "text") 
+```
+
+
+```{r converting speeches into tokens, echo=FALSE}
+#converting speeches into tokens
+  speech_tokens <- tokens(ungd_corpus,what = "word",remove_punct = TRUE,
+  remove_symbols = TRUE, remove_numbers = TRUE, remove_url = TRUE, remove_separators = TRUE,
+  split_hyphens = TRUE, include_docvars = FALSE, padding = FALSE)
+
+#removing stopwords and converting to lowercase
+  speech_tokens <- tokens_remove(speech_tokens, c(stopwords("english")))
+  speech_tokens <- tokens_tolower(speech_tokens)
+  
+#removing words which have 'India' but are not of similar context 
+multiword <- c("indian ocean", "indian oceans", "indian pacific", "indian subcontinent", "bassas da india")
+speech_tokens <- tokens_remove(speech_tokens, pattern = phrase(multiword))
+```
+
+
+```{r making a wordcloud, echo = FALSE}
+
+#making a document-feature matrix from the tokens
+dfm_toks <- dfm(
+speech_tokens,
+tolower = TRUE,
+remove_padding = FALSE,
+verbose = quanteda_options("verbose"))
+
+#making a wordcloud of all the words
+textplot_wordcloud(
+    dfm_toks, min_size = 0.5, max_size = 4, min_count = 3, max_words = 500,
+    color = "darkblue", font = NULL, adjust = 0, rotation = 0.1, random_order = FALSE,
+    random_color = FALSE, ordered_color = FALSE, labelcolor = "gray20", labelsize = 1.5,labeloffset = 0,
+    fixed_aspect = TRUE, comparison = FALSE)
+```
+
+
+```{r India for all years, echo = FALSE}
+
+#creating a dataframe with frequency of each word spoken in each year
+freq_words <- textstat_frequency(dfm_toks, groups = ungd_files_except_india$Year)
+
+# Filter the terms relating to  "India"
+freq_India <- subset(freq_words, freq_words$feature %in% c("india","india's", "indian","indians"))
+
+#calculating frequency by year
+india_words <- freq_India %>%
+  group_by(group) %>% summarise(Times = sum(frequency))
+
+#plotting a graph from 1970-2020
+ggplot(india_words, aes(x = group, y = Times)) +
+    xlab("Year") + 
+    ylab("Frequency") +
+  geom_line(group = 1, color = '#009cde', lwd = 1) +
+  ggtitle("Number of Times Non-Indian Leaders Mentioned India in UNGD Speeches",subtitle = "Between 1970-2020") +
+  geom_point(shape = 1, size = 1.5)+
+  labs(caption = "Data Souce: United Nations General Debate Corpus by Jankin Mikhaylov, Slava and Baturo, Alexander and Dasandi, Niheer ; Analysis by CPC Analytics")+
+  scale_x_discrete(breaks = seq(1970, 2020, by= 5))+
+  theme_fivethirtyeight()
+ggsave(filename = "UN_words.jpg", width = 10, height = 4)
+
+```
+
+```{r India 1970-1990, echo = FALSE}
+#plotting for only 1970-1990
+
+india_words %>%
+  filter(group >= 1970 & group<= 1990) %>%
+ggplot(aes(x = group, y = Times)) +
+    xlab("Year") + 
+    ylab("Frequency") +
+  geom_line(group = 1, color = '#009cde', lwd = 1) +
+  geom_point(shape = 1, size = 1.5) +
+  ggtitle("India was mentioned the most in 1971(161 times) after Indo-Pakistani War",subtitle = "Number of Times Non-Indian Leaders Mentioned India in United Nations General Debate Speeches Between 1970-1990") +
+  labs(caption = "Data Souce: United Nations General Debate Corpus by Jankin Mikhaylov, Slava and Baturo, Alexander and Dasandi, Niheer ; Analysis by CPC Analytics")+
+  scale_x_discrete(breaks = seq(1970, 1990, by= 5))+
+  theme_fivethirtyeight()
+ggsave(filename = "UN_words1970-1990.jpg", width = 10, height = 4)
+```
+
+
+```{r India 1991-2010, echo = FALSE}
+#plotting for only 1991-2010
+
+india_words %>%
+  filter(group >= 1991 & group <= 2010) %>%
+ggplot(aes(x = group, y = Times)) +
+    xlab("Year") + 
+    ylab("Frequency") +
+  geom_line(group = 1, color = '#009cde', lwd = 1.5) +
+  geom_point(shape = 1, size = 1.5) +
+  ggtitle("Highest mention in this period were in 1998 (86 times) after the Pokhran II nuclear tests",subtitle = "Number of Times non-Indian Leaders Mentioned India between 1990-2010") +
+  labs(caption = "Data Souce: United Nations General Debate Corpus by Jankin Mikhaylov, Slava and Baturo, Alexander and Dasandi, Niheer ; Analysis by CPC Analytics")+
+  scale_x_discrete(breaks = seq(1991, 2010, by= 5))+
+  theme_fivethirtyeight()
+ggsave(filename = "UN_words1991-2010.jpg", width = 12, height = 4)
+```
+
+```{r India post 2011, include=FALSE}
+#plotting for 2011-2020
+india_words %>%
+  filter(group >= 2011) %>%
+ggplot(aes(x = group, y = Times)) +
+    xlab("Year") + 
+    ylab("Frequency") +
+  geom_line(group = 1, color = '#009cde', lwd = 1.5) +
+  geom_point(shape = 1, size = 1.5) +
+  ggtitle("Towards Mentions in a good light",subtitle = "Number of Times non-Indian Leaders Mentioned India since 2011") +
+  labs(caption = "Data Souce: United Nations General Debate Corpus by Jankin Mikhaylov, Slava and Baturo, Alexander and Dasandi, Niheer ; Analysis by CPC Analytics")+
+  scale_x_discrete(breaks = seq(2011, 2020, by= 3))+
+  theme_fivethirtyeight()
+ggsave(filename = "UN_words2011-2020.jpg", width = 10, height = 4)
+```
+
+
+```{r getting context of words, echo = FALSE}
+#using kwic function to get 4 words spoken before and after India was mentioned
+context <- kwic(toks, c("india", "indians", "indian","india's"), window = 4)
+context <- cbind(context, str_split_fixed(context$docname, "_", 2))
+```
+
+
+```{r making a graph for all countries mentioning India, echo = FALSE}
+#Plotting top countries that mentioned India
+country_frequencies <- context %>%
+  group_by(`1`) %>%
+  summarise(country_freq = n())
+
+country_frequencies %>%
+ filter(country_freq > 20) %>%
+  ggplot(aes(x = `1`, y = country_freq))+
+  geom_bar(stat = "identity", width = 0.7, fill = "#095395")+
+  geom_text(aes(label = country_freq), size =2.5, hjust = -0.5)+
+  scale_x_discrete(labels=c("AFG" = "Afghanistan", "BGD" = "Bangladesh", "BTN" = "Bhutan", "CHN" = "China", "LKA" = "Sri Lanka", "MUS" = "Mauritius","NPL" = "Nepal", "PAK" = "Pakistan", "RUS" = "Russia", "SGP" = "Singapore", "VNM" = "Vietnam"))+
+  ggtitle("Pakistan Mentioned India the most (590 times)",subtitle = "Countries that Mentioned India between 1970-2020") +
+  labs(caption = "Data Souce: United Nations General Debate Corpus by Jankin Mikhaylov, Slava and Baturo, Alexander and Dasandi, Niheer
+       Analysis by CPC Analytics")+
+  theme_fivethirtyeight()+
+  coord_flip()
+ggsave(filename = "Countries_UN.jpg", width = 8, height = 5)
+```
+
+```{r creating a wordcloud for the context India was mentioned in , include=FALSE}
+
+#making a corpus of all the context words
+context_words <- tibble(x = c(context$pre, context$post))
+corpus(context_words, text_field = "x")
+word_corpus <- corpus(context_words, text_field = "x")
+context_tokens <- tokens(word_corpus,what = "word",remove_punct = TRUE,remove_symbols = TRUE,
+  remove_numbers = TRUE, remove_url = TRUE, remove_separators = TRUE, split_hyphens = TRUE,
+  include_docvars = FALSE, padding = FALSE)
+
+#making a document-feature matrix from the tokens
+dfm_context_toks <- dfm(
+context_tokens,
+tolower = TRUE,
+remove_padding = FALSE,
+verbose = quanteda_options("verbose"))
+
+#making a wordcloud of all the context words
+textplot_wordcloud(dfm_context_toks, min_size = 1, max_size = 4,
+    min_count = 3, max_words = 500, color = "darkblue", font = NULL,
+    adjust = 0, rotation = 0.1, random_order = FALSE, random_color = FALSE, ordered_color = FALSE,
+    labelcolor = "gray20", labelsize = 1.5, labeloffset = 0, fixed_aspect = TRUE, comparison = FALSE)
+ggsave(filename = "contextwordcloud.png", width = 20, height = 10)
+```
