@@ -1,10 +1,3 @@
----
-title: "Untitled"
-author: "Jayati Sharma"
-date: "2022-09-22"
-output: pdf_document
----
-
 ```{r setup, include=FALSE}
 library(readtext)
 library(quanteda)
@@ -21,9 +14,8 @@ library(quanteda.textstats)
 library(tokenizers)
 library(tidyverse)
 library(furrr)
-DATA_DIR <- "C:/Users/HP/Downloads/TXT"
+DATA_DIR <- ""
 ```
-
 
 ```{r importing all files, include = FALSE}
 #Reading in text files
@@ -38,7 +30,7 @@ ungd_files <- readtext(paste0(DATA_DIR, "//*"),
 ``` 
 
 
-```{r creating files except India, include=FALSE}
+```{r subsetting files except India, include=FALSE}
 ungd_files_except_india <- ungd_files %>% filter(Country != "IND")
 ##Creating corpus
 ungd_corpus <- corpus(ungd_files_except_india, text_field = "text") 
@@ -70,23 +62,9 @@ verbose = quanteda_options("verbose"))
 
 #wordcloud
 textplot_wordcloud(
-    dfm_toks,
-    min_size = 0.5,
-    max_size = 4,
-    min_count = 3,
-    max_words = 500,
-    color = "darkblue",
-    font = NULL,
-    adjust = 0,
-    rotation = 0.1,
-    random_order = FALSE,
-    random_color = FALSE,
-    ordered_color = FALSE,
-    labelcolor = "gray20",
-    labelsize = 1.5,
-    labeloffset = 0,
-    fixed_aspect = TRUE,
-    comparison = FALSE)
+    dfm_toks, min_size = 0.5, max_size = 4, min_count = 3, max_words = 500, color = "darkblue", font = NULL,
+    adjust = 0, rotation = 0.1, random_order = FALSE, random_color = FALSE, ordered_color = FALSE, labelcolor = "gray20", 
+    labelsize = 1.5, labeloffset = 0,fixed_aspect = TRUE, comparison = FALSE)
 ```
 
 
@@ -128,7 +106,7 @@ ggsave(filename = "UN_words1970-1990.jpg", width = 10, height = 4)
 ```
 
 
-```{r India after 1991, echo = FALSE}
+```{r India 1991-2010, echo = FALSE}
 india_words %>%
   filter(group >= 1991 & group <= 2010) %>%
 ggplot(aes(x = group, y = Times)) +
@@ -143,7 +121,7 @@ ggplot(aes(x = group, y = Times)) +
 ggsave(filename = "UN_words1991-2010.jpg", width = 12, height = 4)
 ```
 
-```{r India post 2011, include=FALSE}
+```{r India 2011-2020, include=FALSE}
 india_words %>%
   filter(group >= 2011) %>%
 ggplot(aes(x = group, y = Times)) +
@@ -188,37 +166,16 @@ worddd <- tibble(x = c(CONTEXT$pre, CONTEXT$post))
 corpus(worddd, text_field = "x")
 word_corpus <- corpus(worddd, text_field = "x")
 context_tokens <- tokens(word_corpus,what = "word",remove_punct = TRUE,
-  remove_symbols = TRUE,
-  remove_numbers = TRUE,
-  remove_url = TRUE,
-  remove_separators = TRUE,
-  split_hyphens = TRUE,
-  include_docvars = FALSE,
-  padding = FALSE)
+  remove_symbols = TRUE, remove_numbers = TRUE, remove_url = TRUE, remove_separators = TRUE, split_hyphens = TRUE,
+  include_docvars = FALSE, padding = FALSE)
+
 dfm_context_toks <- dfm(
-context_tokens,
-tolower = TRUE,
-remove_padding = FALSE,
-verbose = quanteda_options("verbose"))
+context_tokens, tolower = TRUE, remove_padding = FALSE, verbose = quanteda_options("verbose"))
 
 #wordcloud
 textplot_wordcloud(
-    dfm_context_toks,
-    min_size = 1,
-    max_size = 4,
-    min_count = 3,
-    max_words = 500,
-    color = "darkblue",
-    font = NULL,
-    adjust = 0,
-    rotation = 0.1,
-    random_order = FALSE,
-    random_color = FALSE,
-    ordered_color = FALSE,
-    labelcolor = "gray20",
-    labelsize = 1.5,
-    labeloffset = 0,
-    fixed_aspect = TRUE,
-    comparison = FALSE)
+    dfm_context_toks, min_size = 1, max_size = 4, min_count = 3, max_words = 500, color = "darkblue", font = NULL,
+    adjust = 0, rotation = 0.1, random_order = FALSE, random_color = FALSE, ordered_color = FALSE, labelcolor = "gray20",
+    labelsize = 1.5, labeloffset = 0, fixed_aspect = TRUE, comparison = FALSE)
 ggsave(filename = "contextwordcloud.png", width = 20, height = 10)
 ```
