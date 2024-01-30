@@ -1,0 +1,343 @@
+---
+title: "Business Analytics"
+subtitle: "Data Wrangling - 2"
+author: "Ayush Patel and Jayati Sharma"
+date: today
+date-format: " DD MMMM, YYYY"
+embed-resources: true
+format: 
+  revealjs:
+    embed-resources: true
+    slide-number: c/t
+    width: 1400
+---
+
+## Pre-requisite{.scrollable}
+
+::: incremental
+You already....
+
+-   Know basics of data wrangling in R
+-   Know basics of data visualization in R
+-   Know univariate and multivariate linear regression
+:::
+
+## Before we begin{.scrollable}
+
+Please install and load the following packages
+
+```{r load}
+#| echo: true
+
+library(dplyr)
+library(tidyverse)
+library(openintro)
+library(nycflights13)
+```
+
+<br> <br>
+
+Access lecture slide from the [course landing page](https://ayushbipinpatel.github.io/GIPE-Business-Analytics/)
+
+## About me{.scrollable}
+
+::: columns
+::: {.column width="70%"}
+I am [Ayush]{.fragment fragment-index="1" style="font-size:45px"}.
+
+[I am a researcher working at the intersection of data, law, development and economics.]{.fragment fragment-index="2" style="font-size:25px"}
+
+[I teach Data Science using R at Gokhale Institute of Politics and Economics]{.fragment fragment-index="3" style="font-size:25px"}
+
+[I am a [RStudio (Posit) certified tidyverse Instructor.](https://education.rstudio.com/trainers/people/patel+ayush/)]{.fragment fragment-index="4" style="font-size:25px"}
+
+[I am a Researcher at [Oxford Poverty and Human development Initiative (OPHI)](https://ophi.org.uk/), at the University of Oxford.]{.fragment fragment-index="5" style="font-size:25px"}
+:::
+
+::: {.column width="30%"}
+**Reach me**
+
+{{< fa solid envelope >}} [ayush.ap58\@gmail.com]{style="font-size:25px"}
+
+{{< fa solid envelope >}} [ayush.patel\@gipe.ac.in]{style="font-size:25px"}
+:::
+:::
+
+## Learning Objectives{.scrollable}
+
+::: incremental
+
+ + Learn how to pivot and join data
+ + Learn how to write a function
+ + Learn how to work with missing values
+
+:::
+
+## Tidy Data{.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
++ Tidy data - a framework for consistent data structure
++ Take a look at `table1` `table2` and `table3`, all part of `tidyverse`
++ All contain the same information but in different ways
+
+```{r tidydata}
+#| echo: true
+
+table1
+table2
+table3
+```
+
+## Tidy Data - Rules{.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
++ Advantages of tidy data structure - Consistent structure and uniformity
++ Variables in columns, observations in rows and values in cells
+
+![Source : [R for Data Science 2e](https://r4ds.hadley.nz/images/tidy-1.png)](https://r4ds.hadley.nz/images/tidy-1.png)
+
+## First Things First - Let's Recap{.scrollable}
+
++ Using `table1`, calculate the total number of cases per year
++ How would you calculate the total number of cases per year with `table2`
+
+## Pivoting - Why?{.scrollable}
+
++ Because data is often in an untidy structure
++ Sometimes you also need to transform data because you need to get it into another specific format
++ Pivot functions enable changing data from one format to another
+
+## Pivoting{.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
++ When column names are not variable names but rather values
+
+``` {r intro_pivot}
+#| eval: true
+#| echo: true
+
+table4a
+```
+
++ Variables `1999` and `2000` are ***values*** of the `year` variable
++ Values in these two variables represent the `cases` variable
+
+## Pivoting{.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
+::: incremental
++ So exactly why do we need to change the structure of the data?
++ Because here, one row represents 2 observations
++ We need to
+  - Select the columns that have values instead of variables (`1999` and `2000`) 
+  - Variable to move the column **names** to (`year`)
+  - Variable to move the column **values** to (`cases`)
+
++ All these steps are done together using **pivot_longer()**
+
+:::
+
+## Pivoting - pivot_longer(){.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
+``` {r pivot_long}
+#| eval: true
+#| echo: true
+
+table4a %>%
+  pivot_longer(c(`1999`, `2000`), names_to = "year", values_to = "cases")
+```
+
++ Converts data into longer format
+
+## Pivoting - pivot_wider(){.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
++ `pivot_wider()` is the opposite of `pivot_longer()`
++ Used when one observation is scattered along rows
+
+::: columns
+::: {.column width="50%"}
+
+``` {r intro_pivot2}
+#| eval: true
+#| echo: true
+
+table2
+```
+
+:::
+
+::: {.column width="50%"}
+
+``` {r pivot_wider}
+#| eval: true
+#| echo: true
+
+table2 %>%
+    pivot_wider(names_from = type, values_from = count)
+```
+
+:::
+:::
+
+## Do it Yourself - 1
+
+Run the following code in your console
+
+``` {r DIY1}
+#| eval: true
+#| echo: true
+
+DIY1 <- data.frame(student_name = c("A","B","C","D","A","B","C","D"),
+                   subject = c("Maths","Maths","Maths","Maths","English","English","English","English"),
+                   grade = c(78,79,98,87, 77,65,69,80))
+```
+
+* Is `DIY1` already in tidy data structure? If not, how would you change it?
+
+``` {r DIY1_1}
+#| eval: true
+#| echo: true
+
+DIY1_1 <- data.frame(student_name = c("A","B","C","D"),
+                   P_1 = c(67,87,93,56),
+                   P_2 = c(86,57,68,94))
+```
+
+* `DIY1_1` shows the grades of students in class for Periodical 1 and Periodical 2. Is the data in tidy format? If not, how would you transform it?
+
+## Joins - Why?{.scrollable}
+
+* More than often, you work with multiple dataframes
+* When you have all your individual dataframes in the required format, you might want to `join` all these datasets together
+* Join function help in joining datasets by identifying matching observations 
+
+## Joins - Keys{.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
+::: incremental
++ To use join functions, it is important to understad what keys are
++ Every join involves the following keys
+    - **primary key** -variable that uniquely identifies each observation in a dataset
+    - when more than one variable is needed, the key is called a compound key
+    - **foreign key** - variable (or set of variables) that corresponds to a primary key in another table
+
+:::
+
+## Joins - Primary Key{.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
+``` {r airplanes}
+#| eval: true
+#| echo: true
+
+nycflights13::airlines
+```
+
++ `airlines` has two variables - carrier code and name
++ You can identify an airline with its two letter carrier code, making carrier the primary key
+
+``` {r weather}
+#| eval: true
+#| echo: true
+
+nycflights13::weather
+```
+
++ `weather` records data about the weather at the origin airports
++ You can identify each observation by the combination of location and time
++ Hence, `origin` and `time_hour` become the compound primary key
+
+## Joins - Foreign Key{.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
++ Foreign Key is a variable in a dataset that corresponds to the primary key of another dataset
+
+``` {r foreign_key}
+#| eval: true
+#| echo: true
+
+nycflights13::flights
+nycflights13::planes
+```
+
++ `flights$tailnum` is a foreign key that corresponds to the primary key `planes$tailnum`
+
+## Do It Yourself - 2{.scrollable}
+
+* What is the primary key for `airports` and `planes` data from `nycflights13`?
+* What is the foreign key in `flights` that corresponds to the primary key in `airports`?
+
+## Joins - Structures{.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
+Relationships and connections between all datasets in the `nycflights13` package
+
+![Source : [R for Data Science 2e](https://r4ds.hadley.nz/diagrams/relational.png)](https://r4ds.hadley.nz/diagrams/relational.png)
+
+## What are join functions?{.scrollable}
+#### [Content for this topic has been sourced from [Hadley Wickham's 'R for Data Science (2e)'](https://r4ds.hadley.nz/). Please check out his work for detailed information.]{style="font-size:15px"}
+
++ They take dataset 1 and 2 and join them to give a single dataframe
++ The output of rows and columns is determined by dataset 1, in most cases 
++ Six join functions - `left_join()`,`inner_join()`,`right_join()`,`full_join()`,`semi_join()` and `anti_join()`
++ **Mutating joins** ***combines*** variables to produce the resulting dataframe
++ **Filtering joins** filter the rows from the two datasets to give the resulting dataframe
+
+## Dataset{.scrollable}
+
+Run the following code chunks in your console
+
+```{r join_data1}
+#| eval: true
+#| echo: true
+data1 <- data.frame(name = c("A","B","C","D","E","F","G", "H", "I", "J"),
+                   ID = c(193,176,6,273,132,182, 1, 42, 67,20),
+                   age = c(23,24,32,43,23,54, 23,20,40,53),
+                   state = c("MH", "MP", "KA", "MP", "UP", "GJ","MH", "UP", "MH", "TN"))
+```
+
+<br>
+
+```{r join_data2}
+#| eval: true
+#| echo: true
+data2 <- data.frame(id = c(193,176,6,273,132,182, 11, 13, 15),
+                   edu_level = c(12,8,10,12,12,0, 2,5,10))
+```
+
+## left_join(){.scrollable}
+
++ Suppose you want to add the additional variable of educational level from `data2` to existing `data1`
++ `left_join()` retains the first dataset (the one you are joining to)
++ Used mainly for joining additional variables
++ The output contains rows only from `data1` and leaves out additional rows that it does not match to from `data2`
++ Note: Rows in `data1` which are not present in `data2` have `NA` values in `edu_level`
+
+```{r left_join}
+#| eval: true
+#| echo: true
+
+data1 %>%
+  left_join(data2, by = join_by(ID == id))
+```
+
+## right_join(){.scrollable}
+
++ [Yes, you guessed it right... `right_join()` does the opposite]{.fragment fragment-index="1"}
++ [Suppose we want to join **all** rows of `data2` to all the variables of `data1`]{.fragment fragment-index="2"}
++ [By using a `right_join()` you have all the rows from `data2` joined to `data1`]{.fragment fragment-index="3"}
++ [Rows from `data2` which are not in `data1` have NA values in remaining columns]{.fragment fragment-index="4"}
+
+
+::: {.fragment fragment-index="5"}
+```{r right_join}
+#| eval: true
+#| echo: true
+
+data1 %>%
+  right_join(data2, by = join_by(ID == id))
+```
+:::
+
