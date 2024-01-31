@@ -340,4 +340,3 @@ data1 %>%
   right_join(data2, by = join_by(ID == id))
 ```
 :::
-
